@@ -3,11 +3,11 @@
 #include<pthread.h>
 #include<unistd.h>
 #include<semaphore.h>
-#include <queue>
+#include<queue>
 
 using namespace std;
 
-int MAXQ = 5;
+int MAXQ = 3;
 bool service = false;
 bool servicedone = false;
 int count = 0;
@@ -23,7 +23,9 @@ void *consumer(void *argaps){
 
   if(thread_id>=MAXQ){
       sem_wait(&mutex_for_queue_count);
-      cout<<"CURRENT_CUSTOMER : "<<thread_id<<" Left as Queue Full "<<endl;
+      time_t now = time(0);
+      tm *ltm = localtime(&now);
+      cout<<ltm->tm_hour << ":"<<ltm->tm_min << ":"<<ltm->tm_sec <<" CURRENT_CUSTOMER : "<<thread_id<<" Left as Queue Full "<<endl;
       count-=1;
       // cout << "In Queue : " << count << endl;
       sem_post(&mutex_for_queue_count);
@@ -35,7 +37,7 @@ void *consumer(void *argaps){
 
   sem_wait(&mutex);
 
-  cout<<"IN CURRENT_CUSTOMER : "<<thread_id<<endl;
+  //cout<<"IN CURRENT_CUSTOMER : "<<thread_id<<endl;
 
   service = true;
   while(!servicedone);
@@ -50,19 +52,28 @@ void *consumer(void *argaps){
 }
 
 void *service_counter(void *argaps){
+  int customer = 0;
   ofstream outfile("Service_Counter.txt");
   while(1){
     sleep(2);
     if(service==false){
-      outfile<<"IN SERVICE_COUNTER : Sleep"<<endl;
-      cout<<"IN SERVICE_COUNTER : Sleep"<<endl;
+      customer = 0;
+      time_t now = time(0);
+      tm *ltm = localtime(&now);
+      outfile<<ltm->tm_hour << ":"<<ltm->tm_min << ":"<<ltm->tm_sec <<" IN SERVICE_COUNTER : Sleep"<<endl;
+      cout<<ltm->tm_hour << ":"<<ltm->tm_min << ":"<<ltm->tm_sec <<" IN SERVICE_COUNTER : Sleep"<<endl;
     }
     else{
-      outfile<<"IN SERVICE_COUNTER : Giving Service"<<endl;
-      cout<<"IN SERVICE_COUNTER : Giving Service"<<endl;
+      time_t now = time(0);
+      tm *ltm = localtime(&now);
+      outfile<<ltm->tm_hour << ":"<<ltm->tm_min << ":"<<ltm->tm_sec<<" IN SERVICE_COUNTER : Giving Service to Customer "<<customer<<endl;
+      cout<<ltm->tm_hour << ":"<<ltm->tm_min << ":"<<ltm->tm_sec<<" IN SERVICE_COUNTER : Giving Service to Customer "<<customer<<endl;
       sleep(4);
-      outfile<<"IN SERVICE_COUNTER : Service Done"<<endl;
-      cout<<"IN SERVICE_COUNTER : Service Done"<<endl;
+      time_t exit = time(0);
+      tm *ltt = localtime(&exit);
+      outfile<<ltt->tm_hour << ":"<<ltt->tm_min << ":"<<ltt->tm_sec<<" IN SERVICE_COUNTER : Service Done for Customer "<<customer<<endl;
+      cout<<ltt->tm_hour << ":"<<ltt->tm_min << ":"<<ltt->tm_sec<<" IN SERVICE_COUNTER : Service Done for Customer "<<customer<<endl;
+      customer+=1;
       servicedone = true;
       while(servicedone);
     }
@@ -80,7 +91,7 @@ int main(){
   for(int i=0; i<MAXQ; i++)
     q.push(i);
 
-  cout<<" Text in main"<<endl;
+  cout<<"Text in main"<<endl;
   pthread_create(&svc,NULL,service_counter,NULL);
 
   int num=0;
