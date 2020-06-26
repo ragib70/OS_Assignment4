@@ -43,7 +43,9 @@ void *consumer(void *argaps){
   while(!servicedone);
   servicedone=false;
   service = false;
+  sem_wait(&mutex_for_queue_count);
   count-=1;
+  sem_post(&mutex_for_queue_count);
   q.push(thread_id);
   // cout << "In Queue : " << count << endl;
   sem_post(&mutex);
